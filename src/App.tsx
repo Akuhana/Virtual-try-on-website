@@ -1,14 +1,15 @@
 import { StrictMode, useContext, useState, useTransition } from 'react'
 import './App.css'
 import { Canvas, } from '@react-three/fiber'
-import { BakeShadows, OrbitControls, Environment, AccumulativeShadows, RandomizedLight, Center } from '@react-three/drei'
-import { EffectComposer, Bloom, DepthOfField, ToneMapping } from '@react-three/postprocessing'
+import { OrbitControls, Environment, AccumulativeShadows, RandomizedLight, Center } from '@react-three/drei'
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { useLoader } from '@react-three/fiber'
 import { useControls } from 'leva'
 import { Mesh, MeshStandardMaterial } from 'three'
 import { ModelPathContext } from './main'
 import * as THREE from 'three'
+
 function App() {
   const {lightIntensity} = useControls({lightIntensity: {value: 0.1, min: 0, max: 1}})
   return (
@@ -27,7 +28,7 @@ function App() {
           {/* <Box args={[1, 1, 1]} position={[0, 0, 0]} castShadow receiveShadow/> */}
           {/* Postprocessing */}
 
-          <EffectComposer disableNormalPass>
+          <EffectComposer enableNormalPass>
             <Bloom luminanceThreshold={0.0} mipmapBlur luminanceSmoothing={0.0} intensity={lightIntensity} />
             {/* <DepthOfField target={[0, 0, 13]} focalLength={4} bokehScale={15} height={700} /> */}
           </EffectComposer>
@@ -70,10 +71,11 @@ function Model3D() {
   )
 }
 function Env() {
-  const [preset, setPreset] = useState('sunset')
+  type PresetType = 'sunset' | 'dawn' | 'night' | 'warehouse' | 'forest' | 'apartment' | 'studio' | 'city' | 'park' | 'lobby';
+  const [preset, setPreset] = useState<PresetType>('sunset')
   // You can use the "inTransition" boolean to react to the loading in-between state,
   // For instance by showing a message
-  const [inTransition, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const { blur, backgroundIntensity } = useControls({
     blur: { value: 0.5, min: 0, max: 1 },
     backgroundIntensity: { value: 1, min: 0, max: 1 },
