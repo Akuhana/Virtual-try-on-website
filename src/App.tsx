@@ -11,13 +11,15 @@ import { ModelPathContext } from './main'
 import * as THREE from 'three'
 
 function App() {
-  const {lightIntensity} = useControls({lightIntensity: {value: 0.1, min: 0, max: 1}})
+  const {lightIntensity, stopRotation} = useControls({
+    lightIntensity: {value: 0.1, min: 0, max: 1},
+    stopRotation: {value: false}
+  })
   return (
     <StrictMode>
       <div id="canvas-container" style={{ width: "100vw", height: "100vh" }}>
         <Canvas shadows dpr={[1, 1.5]} camera={{ position: [-1.5, 1, 4.5], fov: 40, near: 1, far: 20 }} eventPrefix="client">
           {/* Lights */}
-          
           <group position={[0, -0.65, 0]}>
             <Model3D />
             
@@ -25,16 +27,12 @@ function App() {
               <RandomizedLight amount={8} radius={5} ambient={0.5} position={[5, 3, 2]} bias={0.001} />
             </AccumulativeShadows>
           </group>
-          {/* <Box args={[1, 1, 1]} position={[0, 0, 0]} castShadow receiveShadow/> */}
-          {/* Postprocessing */}
 
           <EffectComposer enableNormalPass>
             <Bloom luminanceThreshold={0.0} mipmapBlur luminanceSmoothing={0.0} intensity={lightIntensity} />
-            {/* <DepthOfField target={[0, 0, 13]} focalLength={4} bokehScale={15} height={700} /> */}
           </EffectComposer>
           <Env />
-          <OrbitControls autoRotate autoRotateSpeed={0.5} enablePan={false} enableZoom={false} minPolarAngle={Math.PI / 2.1} maxPolarAngle={Math.PI / 2.1} />
-          {/* Small helper that freezes the shadows for better performance */}
+          <OrbitControls autoRotate={!stopRotation} autoRotateSpeed={0.5} enablePan={false} enableZoom={false} minPolarAngle={Math.PI / 2.1} maxPolarAngle={Math.PI / 2.1} />
         </Canvas>
       </div>
     </StrictMode>
@@ -49,10 +47,10 @@ function Model3D() {
   let obj = useLoader(OBJLoader, fileURL)
   try {
     obj.traverse((child) => {
-      if ((child as Mesh).isMesh) { // Type assertion here
-        const mesh = child as Mesh; // Explicitly type child as Mesh
+      if ((child as Mesh).isMesh) {
+        const mesh = child as Mesh;
         mesh.castShadow = true;
-        const prevMaterial = mesh.material as MeshStandardMaterial; // Type assertion to MeshStandardMaterial
+        const prevMaterial = mesh.material as MeshStandardMaterial;
         prevMaterial.roughness = roughness;
         
         mesh.material = new MeshStandardMaterial();
@@ -73,8 +71,7 @@ function Model3D() {
 function Env() {
   type PresetType = 'sunset' | 'dawn' | 'night' | 'warehouse' | 'forest' | 'apartment' | 'studio' | 'city' | 'park' | 'lobby';
   const [preset, setPreset] = useState<PresetType>('sunset')
-  // You can use the "inTransition" boolean to react to the loading in-between state,
-  // For instance by showing a message
+
   const [, startTransition] = useTransition()
   const { blur, backgroundIntensity } = useControls({
     blur: { value: 0.5, min: 0, max: 1 },
@@ -82,10 +79,7 @@ function Env() {
     preset: {
       value: preset,
       options: ['sunset', 'dawn', 'night', 'warehouse', 'forest', 'apartment', 'studio', 'city', 'park', 'lobby'],
-      // If onChange is present the value will not be reactive, see https://github.com/pmndrs/leva/blob/main/docs/advanced/controlled-inputs.md#onchange
-      // Instead we transition the preset value, which will prevents the suspense bound from triggering its fallback
-      // That way we can hang onto the current environment until the new one has finished loading ...
-      onChange: (value: any) => startTransition(() => setPreset(value))
+      onChange: (value: any) => startTransition(() => setPreset(value)),
     }
   })
   return <Environment preset={preset} background backgroundBlurriness={blur} backgroundIntensity={backgroundIntensity}/>
